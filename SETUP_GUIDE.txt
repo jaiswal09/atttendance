@@ -1,0 +1,350 @@
+# RSAMS - Role-Based Student Attendance Management System
+# Complete Setup Guide for Beginners
+
+=================================================================
+WHAT IS RSAMS?
+=================================================================
+
+RSAMS (Role-Based Student Attendance Management System) is a comprehensive web application designed to manage student attendance across educational institutions. It provides role-based access control for:
+
+- Students: Mark attendance, submit leave requests, view personal reports
+- Teachers: Manage student attendance, approve leave requests, view class analytics  
+- Administrators: Full system oversight, user management, course management
+
+=================================================================
+SYSTEM REQUIREMENTS
+=================================================================
+
+Before starting, ensure your computer has:
+- Windows 10/11, macOS 10.14+, or Linux Ubuntu 18.04+
+- At least 4GB RAM
+- 2GB free disk space
+- Stable internet connection
+
+=================================================================
+STEP 1: INSTALL NODE.JS
+=================================================================
+
+1. Visit https://nodejs.org/
+2. Download the LTS (Long Term Support) version
+3. Run the installer and follow the setup wizard
+4. Accept all default settings
+5. Restart your computer after installation
+
+To verify installation:
+- Open Command Prompt (Windows) or Terminal (Mac/Linux)
+- Type: node --version
+- Type: npm --version
+- Both should show version numbers
+
+=================================================================
+STEP 2: INSTALL POSTGRESQL DATABASE
+=================================================================
+
+1. Visit https://www.postgresql.org/download/
+2. Download PostgreSQL for your operating system
+3. Run the installer
+4. During installation:
+   - Set a password for the 'postgres' user (remember this!)
+   - Use default port 5432
+   - Accept default locale
+5. Complete the installation
+
+To verify installation:
+- Open Command Prompt/Terminal
+- Type: psql --version
+- Should show PostgreSQL version
+
+=================================================================
+STEP 3: INSTALL A CODE EDITOR
+=================================================================
+
+Download and install Visual Studio Code:
+1. Visit https://code.visualstudio.com/
+2. Download for your operating system
+3. Install with default settings
+4. Open VS Code after installation
+
+=================================================================
+STEP 4: DOWNLOAD THE PROJECT
+=================================================================
+
+Option A - Using Git (Recommended):
+1. Install Git from https://git-scm.com/
+2. Open Command Prompt/Terminal
+3. Navigate to where you want the project:
+   cd Desktop
+4. Clone the repository:
+   git clone [YOUR_REPOSITORY_URL]
+5. Enter the project folder:
+   cd rsams-attendance-system
+
+Option B - Download ZIP:
+1. Download the project as ZIP file
+2. Extract to your Desktop
+3. Rename folder to "rsams-attendance-system"
+
+=================================================================
+STEP 5: INSTALL PROJECT DEPENDENCIES
+=================================================================
+
+1. Open Command Prompt/Terminal
+2. Navigate to project folder:
+   cd Desktop/rsams-attendance-system
+3. Install all required packages:
+   npm install
+
+This will take 2-5 minutes depending on your internet speed.
+
+=================================================================
+STEP 6: SET UP THE DATABASE
+=================================================================
+
+1. Create a new database:
+   - Open Command Prompt/Terminal
+   - Type: psql -U postgres
+   - Enter your PostgreSQL password
+   - Type: CREATE DATABASE rsams_db;
+   - Type: \q to exit
+
+2. Create environment file:
+   - In your project folder, copy .env.example to .env
+   - Open .env file in VS Code
+   - Update the DATABASE_URL line:
+     DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/rsams_db?schema=public"
+   - Replace YOUR_PASSWORD with your PostgreSQL password
+
+3. Generate Prisma client:
+   npm run db:generate
+
+4. Run database migrations:
+   npm run db:migrate
+
+5. Seed the database with sample data:
+   npm run db:seed
+
+=================================================================
+STEP 7: START THE APPLICATION
+=================================================================
+
+1. In Command Prompt/Terminal, ensure you're in project folder
+2. Start both frontend and backend:
+   npm run dev
+
+3. You should see output like:
+   "🚀 RSAMS Server running on port 3001"
+   "Local: http://localhost:5173"
+
+4. Open your web browser
+5. Go to: http://localhost:5173
+
+=================================================================
+STEP 8: TEST THE APPLICATION
+=================================================================
+
+The application includes demo accounts:
+
+ADMINISTRATOR:
+- Email: admin@rsams.edu
+- Password: admin123
+- Access: Full system management
+
+TEACHER:
+- Email: sarah.johnson@rsams.edu
+- Password: teacher123
+- Access: Course and attendance management
+
+STUDENT:
+- Email: john.smith@student.rsams.edu
+- Password: student123
+- Access: Personal attendance and leave requests
+
+=================================================================
+FEATURES AVAILABLE IN DEMO
+=================================================================
+
+Student Dashboard:
+✓ Mark daily attendance for enrolled courses
+✓ Submit leave requests with reasons and date ranges
+✓ View personal attendance statistics and trends
+✓ Track leave request status (pending/approved/rejected)
+✓ Interactive charts showing attendance patterns
+
+Teacher Dashboard:
+✓ View all students in assigned courses
+✓ Update attendance status (Present/Absent/Excused)
+✓ Review and approve/reject student leave requests
+✓ View class-wide attendance analytics
+✓ Manage attendance for past and current sessions
+
+Administrator Dashboard:
+✓ Complete system overview with institution-wide statistics
+✓ User management (view/edit/delete students and teachers)
+✓ Course management and teacher assignments
+✓ System-wide attendance reports and analytics
+✓ Leave request oversight and approval
+✓ Activity logs and audit trails
+
+=================================================================
+COMMON ISSUES AND SOLUTIONS
+=================================================================
+
+Issue: "npm: command not found"
+Solution: Node.js not installed properly. Reinstall Node.js and restart computer.
+
+Issue: "psql: command not found"
+Solution: PostgreSQL not installed or not in PATH. Reinstall PostgreSQL.
+
+Issue: "Port 3001 already in use"
+Solution: Kill the process using port 3001 or change PORT in .env file.
+
+Issue: "Database connection failed"
+Solution: 
+1. Check if PostgreSQL is running
+2. Verify DATABASE_URL in .env file
+3. Ensure database 'rsams_db' exists
+
+Issue: "Module not found" errors
+Solution: Delete node_modules folder and package-lock.json, then run:
+npm install
+
+Issue: "Migration failed"
+Solution: 
+1. Drop and recreate database:
+   psql -U postgres
+   DROP DATABASE rsams_db;
+   CREATE DATABASE rsams_db;
+   \q
+2. Run migrations again: npm run db:migrate
+
+Issue: Page won't load after npm run dev
+Solution: 
+1. Check if both frontend (5173) and backend (3001) are running
+2. Try opening http://localhost:5173 in different browser
+3. Check terminal for any error messages
+
+Issue: Login not working
+Solution: Ensure you're using the exact demo credentials provided in Step 8
+
+=================================================================
+DEVELOPMENT COMMANDS
+=================================================================
+
+Start development (both frontend and backend):
+npm run dev
+
+Start only frontend:
+npm run dev:client
+
+Start only backend:
+npm run dev:server
+
+Build for production:
+npm run build
+
+View database in browser:
+npm run db:studio
+
+Reset database (WARNING: Deletes all data):
+npx prisma migrate reset
+npm run db:seed
+
+Generate new migration after schema changes:
+npx prisma migrate dev --name your_migration_name
+
+=================================================================
+CUSTOMIZATION GUIDE
+=================================================================
+
+To customize for your institution:
+
+1. Update Branding:
+   - Edit src/components/ui/Layout.tsx for header
+   - Modify colors in tailwind.config.js
+   - Replace logo and favicon files
+
+2. Add Real Data:
+   - Replace mock data in dashboard components
+   - Update seed.js with your institution's data
+   - Modify course codes and names
+
+3. Add Features:
+   - Create new components in src/components/
+   - Add routes in src/App.tsx
+   - Extend API endpoints in server/routes/
+
+=================================================================
+PRODUCTION DEPLOYMENT
+=================================================================
+
+For live deployment:
+
+1. Build the application:
+   npm run build
+
+2. Set up production database:
+   - Use cloud PostgreSQL (AWS RDS, Google Cloud SQL, etc.)
+   - Update DATABASE_URL in production environment
+
+3. Deploy backend:
+   - Use services like Heroku, Railway, or AWS
+   - Set environment variables
+   - Deploy server folder
+
+4. Deploy frontend:
+   - Use Netlify, Vercel, or AWS S3
+   - Upload dist folder contents
+   - Configure API endpoints
+
+=================================================================
+SECURITY NOTES
+=================================================================
+
+IMPORTANT: This demo uses simplified authentication for demonstration.
+
+For production use:
+- Change all default passwords
+- Use strong JWT secrets
+- Set up HTTPS encryption
+- Configure proper CORS origins
+- Add input validation and sanitization
+- Implement rate limiting
+- Add audit logging
+- Set up regular backups
+
+=================================================================
+SUPPORT AND DOCUMENTATION
+=================================================================
+
+Technology Stack Used:
+- Frontend: React 18 with TypeScript
+- Backend: Node.js with Express
+- Database: PostgreSQL with Prisma ORM
+- Styling: Tailwind CSS
+- Charts: Recharts
+- Icons: Lucide React
+- Authentication: JWT with bcrypt
+
+For help:
+1. Check browser console for error messages
+2. Review server logs in terminal
+3. Check this guide for common solutions
+4. Search online for specific error messages
+5. Contact system administrator for institution-specific issues
+
+=================================================================
+NEXT STEPS
+=================================================================
+
+After successful setup:
+1. Explore all three user roles using demo accounts
+2. Test attendance marking and leave request workflows
+3. Review analytics and reporting features
+4. Plan customization for your specific needs
+5. Prepare real user data for production deployment
+
+=================================================================
+
+This completes the setup guide for RSAMS. The application should now be running locally and ready for testing and customization.
+
+For any technical issues not covered in this guide, please refer to the documentation of the individual technologies used or contact your system administrator.

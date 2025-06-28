@@ -1,0 +1,218 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  role         Role
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Profile relationships
+  studentProfile StudentProfile?
+  teacherProfile TeacherProfile?
+
+  // Activity tracking
+  lastLogin    DateTime?
+  loginAttempts Int @default(0)
+  lockedUntil  DateTime?
+
+  @@map("users")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+model StudentProfile {
+  id        String @id @default(cuid())
+  userId    String @unique
+  name      String
+  studentId String @unique
+  phone     String?
+  address   String?
+  
+  // Relationships
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollments  Enrollment[]
+  attendances  Attendance[]
+  leaveRequests LeaveRequest[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("student_profiles")
+}
+
+model TeacherProfile {
+  id      String  @id @default(cuid())
+  userId  String  @unique
+  name    String
+  phone   String?
+  address String?
+  
+  // Relationships
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseAssignments CourseAssignment[]
+  leaveReviews    LeaveRequest[] @relation("ReviewedBy")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("teacher_profiles")
+}
+
+model Course {
+  id          String @id @default(cuid())
+  name        String
+  code        String @unique
+  description String?
+  credits     Int    @default(3)
+  isActive    Boolean @default(true)
+
+  // Relationships
+  enrollments     Enrollment[]
+  assignments     CourseAssignment[]
+  attendances     Attendance[]
+  sessions        Session[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("courses")
+}
+
+model Enrollment {
+  id        String @id @default(cuid())
+  studentId String
+  courseId  String
+  
+  // Relationships
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course    Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  enrolledAt DateTime @default(now())
+  isActive   Boolean  @default(true)
+
+  @@unique([studentId, courseId])
+  @@map("enrollments")
+}
+
+model CourseAssignment {
+  id        String @id @default(cuid())
+  teacherId String
+  courseId  String
+  
+  // Relationships
+  teacher   TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  course    Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  assignedAt DateTime @default(now())
+  isActive   Boolean  @default(true)
+
+  @@unique([teacherId, courseId])
+  @@map("course_assignments")
+}
+
+model Session {
+  id          String   @id @default(cuid())
+  courseId    String
+  date        DateTime
+  startTime   DateTime
+  endTime     DateTime
+  topic       String?
+  isActive    Boolean  @default(true)
+
+  // Relationships
+  course      Course       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  attendances Attendance[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("sessions")
+}
+
+model Attendance {
+  id        String @id @default(cuid())
+  studentId String
+  courseId  String
+  sessionId String?
+  date      DateTime
+  status    AttendanceStatus
+  notes     String?
+
+  // Relationships
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  course    Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  session   Session?       @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+
+  markedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([studentId, courseId, date])
+  @@map("attendances")
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  EXCUSED
+  LATE
+}
+
+model LeaveRequest {
+  id          String @id @default(cuid())
+  studentId   String
+  reason      String
+  startDate   DateTime
+  endDate     DateTime
+  status      LeaveStatus @default(PENDING)
+  reviewedBy  String?
+  reviewNotes String?
+  
+  // Relationships
+  student     StudentProfile  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  reviewer    TeacherProfile? @relation("ReviewedBy", fields: [reviewedBy], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  reviewedAt  DateTime?
+
+  @@map("leave_requests")
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String
+  entity    String
+  entityId  String
+  oldValues Json?
+  newValues Json?
+  ipAddress String?
+  userAgent String?
+  
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}
