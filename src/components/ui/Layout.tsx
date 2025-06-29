@@ -35,6 +35,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   };
 
+  const getUserName = () => {
+    if (user?.studentProfile?.name) return user.studentProfile.name;
+    if (user?.teacherProfile?.name) return user.teacherProfile.name;
+    return user?.email || 'User';
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -61,10 +67,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   {getRoleIcon()}
                   <div className="text-right">
                     <div className="text-sm font-medium text-gray-900">
-                      {user.profile?.name || user.email}
+                      {getUserName()}
                     </div>
                     <div className="text-xs text-gray-500 capitalize">
                       {user.role.toLowerCase()}
+                      {user.studentProfile?.studentId && ` • ${user.studentProfile.studentId}`}
                     </div>
                   </div>
                 </div>

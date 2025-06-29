@@ -25,61 +25,63 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // Check for existing session
-    const storedUser = localStorage.getItem('rsams_user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    const token = localStorage.getItem('rsams_token');
+    if (token) {
+      // Verify token with backend
+      verifyToken(token);
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
   }, []);
+
+  const verifyToken = async (token: string) => {
+    try {
+      const response = await fetch('/api/auth/profile', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setUser(data.data.user);
+      } else {
+        // Token is invalid, remove it
+        localStorage.removeItem('rsams_token');
+        localStorage.removeItem('rsams_user');
+      }
+    } catch (error) {
+      console.error('Token verification error:', error);
+      localStorage.removeItem('rsams_token');
+      localStorage.removeItem('rsams_user');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      // Mock authentication - replace with actual API call
-      const mockUsers = [
-        {
-          id: '1',
-          email: 'admin@rsams.edu',
-          role: 'ADMIN' as const,
-          profile: { id: '1', name: 'System Administrator' }
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
         },
-        {
-          id: '2',
-          email: 'teacher@rsams.edu',
-          role: 'TEACHER' as const,
-          profile: {
-            id: '2',
-            name: 'Dr. Sarah Johnson',
-            contact: '+1-555-0123',
-            courses: [
-              { id: '1', name: 'Computer Science 101', code: 'CS101' },
-              { id: '2', name: 'Data Structures', code: 'CS201' }
-            ]
-          }
-        },
-        {
-          id: '3',
-          email: 'student@rsams.edu',
-          role: 'STUDENT' as const,
-          profile: {
-            id: '3',
-            name: 'John Smith',
-            studentId: 'ST2024001',
-            courses: [
-              { id: '1', name: 'Computer Science 101', code: 'CS101' },
-              { id: '3', name: 'Mathematics', code: 'MATH101' }
-            ]
-          }
-        }
-      ];
+        body: JSON.stringify({ email, password })
+      });
 
-      const foundUser = mockUsers.find(u => u.email === email && password === 'password123');
-      
-      if (foundUser) {
-        setUser(foundUser);
-        localStorage.setItem('rsams_user', JSON.stringify(foundUser));
+      if (response.ok) {
+        const data = await response.json();
+        const { user: userData, token } = data.data;
+        
+        setUser(userData);
+        localStorage.setItem('rsams_token', token);
+        localStorage.setItem('rsams_user', JSON.stringify(userData));
         return true;
+      } else {
+        const errorData = await response.json();
+        console.error('Login failed:', errorData.message);
+        return false;
       }
-      return false;
     } catch (error) {
       console.error('Login error:', error);
       return false;
@@ -88,17 +90,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const register = async (email: string, password: string, role: string, profileData: any): Promise<boolean> => {
     try {
-      // Mock registration - replace with actual API call
-      const newUser: User = {
-        id: Date.now().toString(),
-        email,
-        role: role as 'STUDENT' | 'TEACHER' | 'ADMIN',
-        profile: { id: Date.now().toString(), ...profileData }
-      };
-      
-      setUser(newUser);
-      localStorage.setItem('rsams_user', JSON.stringify(newUser));
-      return true;
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          role,
+          name: profileData.name,
+          studentId: profileData.studentId,
+          phone: profileData.phone,
+          address: profileData.address
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const { user: userData, token } = data.data;
+        
+        setUser(userData);
+        localStorage.setItem('rsams_token', token);
+        localStorage.setItem('rsams_user', JSON.stringify(userData));
+        return true;
+      } else {
+        const errorData = await response.json();
+        console.error('Registration failed:', errorData.message);
+        return false;
+      }
     } catch (error) {
       console.error('Registration error:', error);
       return false;
@@ -107,6 +127,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('rsams_token');
     localStorage.removeItem('rsams_user');
   };
 
